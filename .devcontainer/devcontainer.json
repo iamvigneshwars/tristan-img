@@ -1,0 +1,24 @@
+{
+  "name": "tristan-img",
+  "image": "docker.io/library/rust:1.82.0-bookworm",
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "rust-analyzer.checkOnSave.command": "clippy",
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "rust-lang.rust-analyzer"
+      },
+      "extensions": [
+        "rust-lang.rust-analyzer",
+        "tamasfe.even-better-toml"
+      ]
+    }
+  },
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind",
+  "workspaceFolder": "/workspace/",
+  "runArgs": [
+    "--security-opt=label=type:container_runtime_t",
+    "--mount",
+    "type=bind,source=/dls/i19-2/data/2024/cy36445-1/330_SNP_TRS_150K_ES_20mW_10Hz/,target=/data"
+  ]
+}
