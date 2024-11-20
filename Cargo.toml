@@ -4,3 +4,13 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+clap = { version = "4.5.20", features = ["derive", "env"] }
+dotenvy = "0.15.7"
+hdf5 = { git = "https://github.com/aldanor/hdf5-rust.git", rev = "43015ddaa87e62b63dc1b1ae7fed49a430e1b53a", features = [
+  "static",
+] }
+# hdf5 = "0.8.1"
+ptree = "0.5.0"
+thiserror = "1.0.64"
+tracing = "0.1.40"
+tracing-subscriber = "0.3.18"
