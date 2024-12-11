@@ -1,6 +1,6 @@
 use hdf5::File;
 use ptree::{item::StringItem, TreeBuilder};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 /// An error arising from loading a collection
 #[derive(Debug, thiserror::Error)]
@@ -13,6 +13,8 @@ pub enum Error {
     NoFileStem,
     #[error("Could not determine parent direcotry of NeXus file")]
     NoParentDirecory,
+    #[error("Dataset {0} not found in file")]
+    DatasetNotFound(String),
 }
 
 /// A detector module
@@ -74,4 +76,42 @@ impl Collection {
         }
         tree.build()
     }
+}
+
+/// Event
+pub struct Event {
+    /// List of Event Id
+    event_id: Vec<u32>,
+    /// X and Y position of an event
+    position: Vec<(u16, u16)>,
+}
+
+impl Event {
+    /// Read a event
+    pub fn read_event<P: AsRef<Path>>(path: P) -> Result<Vec<u32>, Error> {
+        let file = File::open(path)?;
+        if let Ok(dataset) = file.dataset("event_id") {
+            let values: Vec<u32> = dataset.read_1d()?.to_vec();
+            Ok(values)
+        } else {
+            Err(Error::DatasetNotFound("event_id".to_string()))
+        }
+    }
+}
+
+/// Reads HDF5 file
+pub fn read_hdf5_data<P: AsRef<Path>>(path: P, keys: &[&str]) -> Result<Vec<Vec<f64>>, Error> {
+    let file = File::open(path)?;
+    let mut data = Vec::new();
+
+    for &key in keys {
+        if let Ok(dataset) = file.dataset(key) {
+            let values: Vec<f64> = dataset.read_1d()?.to_vec();
+            data.push(values);
+        } else {
+            return Err(Error::DatasetNotFound(key.to_string()));
+        }
+    }
+
+    Ok(data)
 }

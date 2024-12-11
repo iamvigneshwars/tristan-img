@@ -7,7 +7,7 @@
 mod collection;
 
 use clap::{Parser, Subcommand};
-use collection::Collection;
+use collection::{read_hdf5_data, Collection};
 use ptree::print_tree;
 use std::path::PathBuf;
 use tracing::Level;
@@ -42,8 +42,15 @@ enum DebugCommands {
 
 #[derive(Debug, Clone, Parser)]
 struct DebugDatasetsCommand {
-    /// The path to the nexus file which describes the data collection
+    /// The path to the NeXus file which describes the data collection
+    #[clap(long, env = "NEXUS_FILE")]
     nexus_path: PathBuf,
+    /// The path to the data file(s)
+    #[clap(long, env = "DATA_FILES")]
+    data_files: Vec<PathBuf>,
+    /// The dataset keys to read
+    #[clap(long)]
+    datasets: Vec<String>,
     /// The width to which the count field in data file names should be padded
     #[clap(long, env = "DATA_FILE_PADDING", default_value_t = 6)]
     data_file_padding: usize,
@@ -61,7 +68,22 @@ fn main() {
             subcommand: DebugCommands::Datasets(args),
         } => {
             let collection =
-                Collection::from_nexus(args.nexus_path, args.data_file_padding).unwrap();
+                Collection::from_nexus(args.nexus_path.clone(), args.data_file_padding).unwrap();
+
+            for data_file in &args.data_files {
+                match read_hdf5_data(
+                    data_file,
+                    &args.datasets.iter().map(String::as_str).collect::<Vec<_>>(),
+                ) {
+                    Ok(data) => {
+                        for (key, dataset) in args.datasets.iter().zip(data) {
+                            println!("Dataset {key} in {data_file:?}: {:?}", dataset);
+                        }
+                    }
+                    Err(err) => eprintln!("Error reading datasets from {data_file:?}: {err}"),
+                }
+            }
+
             print_tree(&collection.as_tree()).unwrap();
         }
     }
